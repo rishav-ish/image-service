@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from app.api.routes import router as api_router
+from app.storage.s3_client import S3StorageClient
+from app.core.config import settings
 
 
 def create_app() -> FastAPI:
@@ -16,5 +18,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
-

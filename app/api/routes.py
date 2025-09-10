@@ -1,15 +1,17 @@
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, Path
 from fastapi.responses import StreamingResponse
 
 from app.core.config import settings
 from app.repositories.mongo_repo import ImageRepository
 from app.storage.s3_client import S3StorageClient
+from app.logger import get_logger
 
 
 router = APIRouter()
+logger = get_logger()
 
 
 def get_repo() -> ImageRepository:
@@ -39,7 +41,7 @@ async def upload_image(
     s3: S3StorageClient = Depends(get_s3),
 ):
     contents = await file.read()
-    s3_key = f"{user_id}/{uuid.uuid4()}-{file.filename}"
+    s3_key = f"{user_id}/{uuid.uuid4()}"
     s3_uri = s3.put_object(key=s3_key, content=contents, content_type=file.content_type)
     doc = {
         "user_id": user_id,
@@ -60,9 +62,9 @@ async def upload_image(
     response_description="Returns a list of image metadata objects"
 )
 def list_images(
-    user_id: Optional[str] = Query(None, description="Filter images by specific user ID"),
-    content_type: Optional[str] = Query(None, description="Filter images by MIME type (e.g., 'image/jpeg', 'image/png')"),
-    filename: Optional[str] = Query(None, description="Filter images by filename"),
+    user_id: Optional[str] = Query(None, title="Filter images by specific user ID"),
+    content_type: Optional[str] = Query(None, title="Filter images by MIME type (e.g., 'image/jpeg', 'image/png')"),
+    filename: Optional[str] = Query(None, title="Filter images by filename"),
     limit: int = Query(50, ge=1, le=200, description="Maximum number of images to return (1-200)"),
     skip: int = Query(0, ge=0, description="Number of images to skip for pagination"),
     repo: ImageRepository = Depends(get_repo),
@@ -71,44 +73,42 @@ def list_images(
 
 
 @router.get(
-    "/images/{user_id}/{filename}",
+    "/image/{user_id}/{file_id}",
     summary="Download/View image",
     description="Download or view an image file by user ID and filename. Returns the raw image data.",
     response_description="Returns the image file as a stream"
 )
 def download_image(
-    user_id: str = Query(..., description="User ID who owns the image"),
-    filename: str = Query(..., description="Filename of the image to download"),
+    user_id: str = Path(..., title="User ID who owns the image"),
+    file_id: str = Path(..., title="File ID of the image to download"),
     repo: ImageRepository = Depends(get_repo),
     s3: S3StorageClient = Depends(get_s3),
 ):
-    s3_key = f"{user_id}/{filename}"
-    meta = repo.get_image_by_key(s3_key)
+    meta = repo.get_image_by_user_and_file(user_id=user_id, file_id=file_id)
     if not meta:
         raise HTTPException(status_code=404, detail="Image not found")
-    content = s3.get_object(s3_key)
-    return StreamingResponse(iter([content]), media_type=meta["content_type"])  # type: ignore[arg-type]
+    # content = s3.get_object(meta["s3_key"])
+    presigned_url = s3.generate_presigned_url(meta["s3_key"])
+    return presigned_url
 
 
 @router.delete(
-    "/images/{user_id}/{filename}", 
+    "/image/{user_id}/{file_id}", 
     status_code=204,
     summary="Delete image",
     description="Delete an image file and its metadata from both S3 and MongoDB.",
     response_description="No content returned on successful deletion"
 )
 def delete_image(
-    user_id: str = Query(..., description="User ID who owns the image"),
-    filename: str = Query(..., description="Filename of the image to delete"),
+    user_id: str = Path(..., description="User ID who owns the image"),
+    file_id: str = Path(..., description="File ID of the image to delete"),
     repo: ImageRepository = Depends(get_repo),
     s3: S3StorageClient = Depends(get_s3),
 ):
-    s3_key = f"{user_id}/{filename}"
-    meta = repo.get_image_by_key(s3_key)
+    meta = repo.get_image_by_user_and_file(user_id=user_id, file_id=file_id)
     if not meta:
         raise HTTPException(status_code=404, detail="Image not found")
-    s3.delete_object(s3_key)
-    repo.delete_by_key(s3_key)
-    return None
+    s3.delete_object(meta["s3_key"])
+    repo.delete_by_key(meta["s3_key"])
 
 
