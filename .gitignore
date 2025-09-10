@@ -1,0 +1,120 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+*.iml
+
+# Local env
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# S3/Minio/LocalStack data
+localstack/
+localstack-data/
+.localstack/
+
+# MongoDB data
+mongo-data/
+mongodb/
+data/db/
+
+# FastAPI static files (if any)
+staticfiles/
+static/
+
+# Logs
+*.log
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# Docker Compose override files
+docker-compose.override.yml
+
+# Docker volumes
+volumes/
+data/
+tmp/
+tmpdata/
+
+# Ignore docker build cache
+.docker/
+
+# Ignore test output
+test-output/
+tests/__pycache__/
+tests/.pytest_cache/
+
+# Ignore secrets
+secrets/
+*.secret
+*.key
+*.pem
+
+# Ignore OS files
+.DS_Store
+Thumbs.db

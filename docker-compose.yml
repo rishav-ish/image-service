@@ -1,0 +1,43 @@
+services:
+  app:
+    build: .
+    container_name: image-service
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - S3_BUCKET_NAME=images-bucket
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DB=images_db
+      - MONGODB_COLLECTION=images
+    ports:
+      - "8000:8000"
+    depends_on:
+      - localstack
+      - mongodb
+
+  localstack:
+    image: localstack/localstack:2.3
+    container_name: localstack
+    environment:
+      - SERVICES=s3
+      - EDGE_PORT=4566
+      - AWS_DEFAULT_REGION=us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+
+
